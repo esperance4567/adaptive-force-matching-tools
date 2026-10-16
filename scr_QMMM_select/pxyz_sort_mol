@@ -9,7 +9,8 @@ exit;
 sub help {
     print "\n=== pxyz_sort_mol - Molecule-Label Atom Sorting ===\n\n";
     print "PURPOSE:\n";
-    print "  Sorts atoms by the letters of their molecule label (the 5th column), A to Z.\n";
+    print "  Sorts atoms by the letters of their molecule label (the 5th column), A to Z,\n";
+    print "  ignoring upper/lower case.\n";
     print "  Groups atoms of the same molecule type together, regardless of the leading number.\n\n";
     print "USAGE:\n";
     print "  pxyz_sort_mol [file.pxyz]\n";
@@ -24,10 +25,12 @@ sub help {
     print "  - Sorted .pxyz file written to stdout\n";
     print "  - Complete .pxyz format with preserved atom count and header line\n\n";
     print "DETAILS:\n";
-    print "  - Primary sort: trailing letters of mol, compared alphabetically, A to Z\n";
+    print "  - Primary sort: trailing letters of mol, compared alphabetically, A to Z,\n";
+    print "    CASE-INSENSITIVELY (so ISOP, Isop and isop sort together)\n";
     print "    (the leading number is ignored at this stage)\n";
     print "  - Secondary sort: leading digits of mol, compared NUMERICALLY, ascending\n";
-    print "    (only used when the letters are identical, so 9A comes before 10A)\n";
+    print "    (only used when the letters are identical ignoring case, so 9A comes\n";
+    print "    before 10A, and 9A and 10a are ordered by their numbers alone)\n";
     print "  - Tertiary sort: original file order, so atoms with identical labels\n";
     print "    keep their relative order and none are dropped\n";
     print "  - Preserves all atom information while reordering\n";
@@ -39,7 +42,7 @@ sub help {
     print "  Group atoms by molecule type before final processing:\n";
     print "  pxyz_dropoff 0 marked.pxyz | pxyz_sort_mol | pxyz_recenter 1 > final.pxyz\n\n";
     print "MOL ORDER EXAMPLE (first to last):\n";
-    print "  2A < 9A < 12A < 2B < 9B < 12B < 10C\n\n";
+    print "  2A < 9a < 12A < 2B < 9B < 12b < 10C\n\n";
 }
 
 $_=<>; print; chomp; $natm=$_;
@@ -59,9 +62,9 @@ for ($i=0; $i<$natm; $i++)
     push @atoms, [ $digits, $letters, $i, $line ];
 }
 
-foreach my $atom (sort { $a->[1] cmp $b->[1]
-                      or $a->[0] <=> $b->[0]
-                      or $a->[2] <=> $b->[2] } @atoms)
+foreach my $atom (sort { lc($a->[1]) cmp lc($b->[1])
+                      or $a->[0]     <=> $b->[0]
+                      or $a->[2]     <=> $b->[2] } @atoms)
 {
     print $atom->[3];
 }
